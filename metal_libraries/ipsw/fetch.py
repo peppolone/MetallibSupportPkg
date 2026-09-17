@@ -2,13 +2,31 @@
 fetch.py: Fetch latest IPSW images for macOS
 """
 
+import re
 import plistlib
 import packaging.version
+
+from pathlib import Path
+from urllib.parse import urlparse
 
 from .manifest import MetallibSupportPkgManifest
 
 from ..network import NetworkUtilities
 from .. import __version__
+
+
+_SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+def _sha1_from_url(url: str) -> str:
+    """
+    Apple names OTA/IPSW assets after their SHA-1, e.g.
+    .../com_apple_MobileAsset_MacSoftwareUpdate/<sha1>.zip
+    Return that hash when the file name looks like one, else "".
+    """
+    stem = Path(urlparse(url).path).stem
+    return stem if _SHA1_RE.match(stem) else ""
+
 
 class FetchIPSW:
 
@@ -81,9 +99,10 @@ class FetchIPSW:
                             "URL": link["url"],
                             "Variant": "Beta" if (item.get("beta") or item.get("rc")) else "Public",
                             "Date": item["released"],
-                            # AppleDB doesn't always publish a SHA-1 for a given link.
-                            # plistlib can't serialize None, so normalize to an empty string.
-                            "Hash": source.get("hashes", {}).get("sha1") or "",
+                            # AppleDB doesn't always publish a SHA-1 for a given link (none of the
+                            # 24H builds have one). Fall back to the hash Apple embeds in the file
+                            # name, then to "" — plistlib can't serialize None.
+                            "Hash": source.get("hashes", {}).get("sha1") or _sha1_from_url(link["url"]),
                         }
                     )
                     # Don't process any other links
