@@ -81,7 +81,9 @@ class FetchIPSW:
                             "URL": link["url"],
                             "Variant": "Beta" if (item.get("beta") or item.get("rc")) else "Public",
                             "Date": item["released"],
-                            "Hash": source.get("hashes", {}).get("sha1"),
+                            # AppleDB doesn't always publish a SHA-1 for a given link.
+                            # plistlib can't serialize None, so normalize to an empty string.
+                            "Hash": source.get("hashes", {}).get("sha1") or "",
                         }
                     )
                     # Don't process any other links
