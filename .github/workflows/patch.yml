@@ -10,7 +10,7 @@ on:
 
 concurrency:
   cancel-in-progress: ${{ github.event_name == 'push' }}
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 env:
   PYTHONUNBUFFERED: 1
@@ -85,9 +85,7 @@ jobs:
 
       - name: Patch metal libraries
         if: steps.fetch.outputs.BACKUP_FOLDER != ''
-        run: |
-          sysctl -n hw.ncpu hw.memsize
-          python3 metallib.py --patch ${{ steps.fetch.outputs.BACKUP_FOLDER }} --multiprocessing
+        run: python3 metallib.py --patch ${{ steps.fetch.outputs.BACKUP_FOLDER }}
 
       - name: Build sys_patch_dict.py
         if: steps.fetch.outputs.BACKUP_FOLDER != ''
