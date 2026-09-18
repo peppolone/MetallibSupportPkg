@@ -10,7 +10,7 @@ on:
 
 concurrency:
   cancel-in-progress: ${{ github.event_name == 'push' }}
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 env:
   PYTHONUNBUFFERED: 1
@@ -83,7 +83,7 @@ jobs:
           echo "BACKUP_FOLDER=${BACKUP_FOLDER}" >> $GITHUB_OUTPUT
         id: fetch
 
-      - name: Benchmark packing strategies
+      - name: Benchmark split-module
         run: |
           sysctl -n hw.ncpu hw.memsize
-          python3 bench_pack.py ${{ steps.fetch.outputs.BACKUP_FOLDER }}
+          python3 bench_split.py ${{ steps.fetch.outputs.BACKUP_FOLDER }}
